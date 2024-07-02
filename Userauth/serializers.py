@@ -158,7 +158,7 @@ class AdminChangePasswordSerializer(serializers.Serializer):
    
     new_password = serializers.CharField(required=True, write_only=True)
     confirm_password = serializers.CharField(required=True, write_only=True)
-    app_token = serializers.CharField(required=True)
+    
     
 
     def validate(self, data):

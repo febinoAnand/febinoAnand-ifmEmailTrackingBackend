@@ -1122,7 +1122,7 @@ class AdminChangePasswordView(APIView):
         serializer = AdminChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        app_token = serializer.validated_data.get('app_token')
+    
         user_id = serializer.validated_data.get('user_id')
         username = serializer.validated_data.get('username')
        
@@ -1130,8 +1130,6 @@ class AdminChangePasswordView(APIView):
         header_token = request.headers.get('Authorization')
         
 
-        if app_token != settings.APP_TOKEN:
-            return Response({'status': 'INVALID', 'message': 'Invalid app token'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not header_token or not header_token.startswith('Token '):
             return Response({'status': 'INVALID', 'message': 'Authorization header missing or invalid'}, status=status.HTTP_400_BAD_REQUEST)
