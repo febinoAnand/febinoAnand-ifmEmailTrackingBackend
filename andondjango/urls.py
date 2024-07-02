@@ -24,32 +24,11 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('config/', include('configuration.urls')),
-    path('data/', include('data.urls')),
-    path('devices/', include('devices.urls')),
-    path('events/', include('events.urls')),
-    # path('EmailTracking/', include('EmailTracking.urls')),
     path('emailtracking/', include('emailtracking.urls')),
-
     path('smsgateway/', include('smsgateway.urls')),
-
     path('pushnotification/', include('pushnotification.urls')),
-
     path('Userauth/', include('Userauth.urls')),
-    path('app/', include('Userauth.urls')),
     path('settings/', include('settings.urls')),
-    path('', TemplateView.as_view(
-        template_name='swagger-ui.html',
-        extra_context={'schema_url':'openapi-schema'}
-
-    ), name='AndonAPI'),
-
-    path('openapi', get_schema_view(
-        title="Andon Project",
-        description="API for Andon events and config",
-        version="1.0.0"
-    ), name='openapi-schema'),
-
 ]
 
 urlpatterns += staticfiles_urlpatterns()
