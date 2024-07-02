@@ -36,20 +36,27 @@ from rest_framework.exceptions import NotFound
 from .serializers import AuthGroupSerializer
 
 import smsgateway.integrations as SMSgateway
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.contrib.auth import authenticate, login
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 
 class UnauthUserViewSet(viewsets.ModelViewSet):
     serializer_class = UnauthUserSerializer
     queryset = UnauthUser.objects.all().order_by('-pk')
+    permission_classes = [IsAuthenticated]
 
 class UserDetailViewSet(viewsets.ModelViewSet):
     serializer_class = UserDetailSerializer
     queryset = UserDetail.objects.all().order_by('-pk')
+    permission_classes = [IsAuthenticated]
 
 class SettingViewSet(viewsets.ModelViewSet):
     serializer_class = SettingSerializer
     queryset = UserAuthSetting.objects.all().order_by('-pk')
+    permission_classes = [IsAuthenticated]
 
 
 class UserAuthAPI(views.APIView):
@@ -752,7 +759,7 @@ def generate_otp():
 
 
 def SendOTPSMS(number,OTPno):
-    otpmessage = "IFM Email Tracking\nVerification Code: {OTP}".format(OTP= OTPno)
+    otpmessage = "Verification Code: {OTP}".format(OTP= OTPno)
     print ("OTP Sent",otpmessage)
     SMSgateway.sendSMS(number,otpmessage)
 
@@ -902,6 +909,7 @@ class RevokeAuthToken(APIView):
 class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = AuthGroupSerializer
+    permission_classes = [IsAuthenticated]
 
 
 
@@ -912,144 +920,93 @@ class GroupViewSet(viewsets.ModelViewSet):
 
 class LoginView(APIView):
     def post(self, request, *args, **kwargs):
-
-        ########################### POST FLOW ##################################
-
-        #check valid Json data in request 
-        jsondata = {}
+        # Check valid JSON data in request
         try:
             jsondata = json.loads(request.body)
-            print(jsondata)
         except Exception as e:
-            print (e)                       #TODO : save the exception in Log File
-            return HttpResponseNotFound()
-        
-        
-        #check app_token valid with Settings...
-        if "app_token" not in jsondata:
-            return HttpResponseNotFound()
-        
-        if jsondata["app_token"] != settings.APP_TOKEN:
+            print(e)  # TODO: save the exception in Log File
             return HttpResponseNotFound()
 
+        # Check app_token validity
+        if "app_token" not in jsondata or jsondata["app_token"] != settings.APP_TOKEN:
+            return HttpResponseNotFound()
 
-        #Validate the Post Data....
+        # Validate the POST data
         serializer = LoginSerializer(data=jsondata)
         if not serializer.is_valid():
             return HttpResponseBadRequest()
-
-
-        #getting currentDate and Time
-        currentDate = datetime.now().strftime("%Y-%m-%d")
-        currentTime = datetime.now().strftime("%H:%M:%S")
-        currentDateTime = datetime.now()
-        # print (currentDate,currentTime)
-
-        ########################### POST FLOW  END HERE ##################################
-        # serializer = LoginSerializer(data=request.data)
-        # serializer.is_valid(raise_exception=True)
 
         username = serializer.validated_data['username']
         password = serializer.validated_data['password']
         device_id = serializer.validated_data['device_id']
         notification_id = serializer.validated_data['notification_id']
 
-        # if app_token != settings.APP_TOKEN:  
-        #     return Response(status=status.HTTP_400_BAD_REQUEST)
-
         user = User.objects.filter(username=username).first()
 
         if user and not user.is_active:
-                # user_detail = UserDetail.objects.filter(extUser=user).first()
-                return Response({'status': 'INACTIVE','message': 'Your Acount is in Inactive'}, status=status.HTTP_200_OK)
-        
+            return Response({'status': 'INACTIVE', 'message': 'Your Account is Inactive'}, status=status.HTTP_200_OK)
+
         user_detail = UserDetail.objects.filter(extUser=user).first()
         if user_detail and device_id in user_detail.device_id:
             if user and user.check_password(password):
-                
+                token, created = Token.objects.get_or_create(user=user)
 
-            
-                existing_token = self.get_existing_token(request, user.id)
-                if existing_token:
-                  
-                    notification_auth = NotificationAuth.objects.filter(user_to_auth=user).first()
-                    if notification_auth:
-                        notification_auth.noti_token = notification_id
-                        notification_auth.save()
-                    else:
-                        NotificationAuth.objects.create(user_to_auth=user, noti_token=notification_id)
-                    
-                    return Response({
-                        'status': 'OK',
-                        'token': existing_token,
-                        'message': 'Login successful'
-                    })
-
-                token = str(uuid.uuid4())
-                request.session[token] = user.id
-              
                 notification_auth = NotificationAuth.objects.filter(user_to_auth=user).first()
                 if notification_auth:
                     notification_auth.noti_token = notification_id
                     notification_auth.save()
                 else:
                     NotificationAuth.objects.create(user_to_auth=user, noti_token=notification_id)
-                    
+
                 return Response({
                     'status': 'OK',
-                    'token': token,
+                    'token': token.key,
                     'message': 'Login successful'
                 })
-            return Response({'status': 'INVALID','message': 'Invalid Credentials'}, status=status.HTTP_200_OK)
+
+            return Response({'status': 'INVALID', 'message': 'Invalid Credentials'}, status=status.HTTP_200_OK)
         else:
-            return Response({'status': 'DEVICE_MISMATCH','message': 'Account already used in another device. Redo Registration'}, status=status.HTTP_200_OK)
+            return Response({'status': 'DEVICE_MISMATCH', 'message': 'Account already used in another device. Redo Registration'}, status=status.HTTP_200_OK)
 
-        
-
-    def get_existing_token(self, request, user_id):
-        for key, value in request.session.items():
-            if value == user_id:
-                return key
-        return None
-    
-
-                                   #user_Logout_view#
+#                                    #user_Logout_view#
 
 class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
-        serializer = LogoutSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+            serializer = LogoutSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        app_token = serializer.validated_data.get('app_token')
-        device_id = serializer.validated_data.get('device_id')
-        header_token = request.headers.get('Authorization')
+            app_token = serializer.validated_data.get('app_token')
+            device_id = serializer.validated_data.get('device_id')
+            header_token = request.headers.get('Authorization')
 
-        if app_token != settings.APP_TOKEN:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            if app_token != settings.APP_TOKEN:
+                return Response({'status': 'INVALID', 'message': 'Invalid app token'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if header_token is None:
-            return Response({'status': 'INVALID', 'message': 'Authorization header missing'}, status=status.HTTP_200_OK)
+            if not header_token or not header_token.startswith('Token '):
+                return Response({'status': 'INVALID', 'message': 'Authorization header missing or invalid'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_id = self.get_user_id_from_token(request, header_token)
+            token_key = header_token.split()[1]
 
-        if not user_id:
-            return Response({'status': 'INVALID', 'message': 'Unauthorized'}, status=status.HTTP_200_OK)
+            try:
+                token = Token.objects.get(key=token_key)
+            except Token.DoesNotExist:
+                return Response({'status': 'INVALID', 'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_detail = UserDetail.objects.filter(extUser_id=user_id, device_id=device_id).first()
+            user_id = token.user_id
+            user_detail = UserDetail.objects.filter(extUser_id=user_id, device_id=device_id).first()
 
-        if not user_detail:
-            return Response({'status': 'INVALID', 'message': 'Invalid device ID'}, status=status.HTTP_200_OK)
+            if not user_detail:
+                return Response({'status': 'INVALID', 'message': 'Invalid device ID'}, status=status.HTTP_400_BAD_REQUEST)
 
-        request.session.clear()
+            token.delete()
 
-        return Response({'status': 'OK', 'message': 'Logout successful'})
-
-    def get_user_id_from_token(self, request, token):
-        return request.session.get(token)
+            return Response({'status': 'OK', 'message': 'Logout successful'})
                       
                       #user_changepassword_view#
 
 class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         serializer = ChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -1091,8 +1048,10 @@ class ChangePasswordView(APIView):
     def get_user_id_from_token(self, request, token):
         return request.session.get(token)  
     
+                                 #deleteuserview
 
 class DeleteUserView(APIView):
+    permission_classes = [IsAuthenticated]
     def delete(self, request, user_id):
         try:
             user = User.objects.get(id=user_id)
@@ -1117,3 +1076,35 @@ class DeleteUserView(APIView):
         user.delete()
 
         return Response({"success": "User and related details deleted"}, status=status.HTTP_200_OK)
+    
+    
+    
+class WebLoginView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = WebLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                token, created = Token.objects.get_or_create(user=user)
+                if not request.user.is_authenticated:
+                    login(request, user)
+                return Response({'status': 'OK', 'message': 'Login successful', 'token': token.key})
+            return Response({'status': 'INVALID', 'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class WebLogoutView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer =WebLogoutSerializer(data=request.data)
+        if serializer.is_valid():
+            token_key = serializer.validated_data['token']
+            try:
+                token = Token.objects.get(key=token_key)
+                token.delete()
+                return Response({'status': 'OK', 'message': 'Logout successful'})
+            except Token.DoesNotExist:
+                return Response({'status': 'INVALID', 'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
