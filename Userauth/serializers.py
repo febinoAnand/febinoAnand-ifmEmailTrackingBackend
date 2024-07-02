@@ -130,8 +130,7 @@ class LogoutSerializer(serializers.Serializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
-    app_token = serializers.CharField(required=True)
-    device_id = serializers.CharField(required=True)
+    
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
     confirm_password = serializers.CharField(required=True)

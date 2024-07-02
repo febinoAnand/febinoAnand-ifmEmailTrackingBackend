@@ -1012,14 +1012,12 @@ class ChangePasswordView(APIView):
         serializer = ChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        app_token = serializer.validated_data.get('app_token')
-        device_id = serializer.validated_data.get('device_id')
+       
         old_password = serializer.validated_data.get('old_password')
         new_password = serializer.validated_data.get('new_password')
         header_token = request.headers.get('Authorization')
 
-        if app_token != settings.APP_TOKEN:
-            return Response({'status': 'INVALID', 'message': 'Invalid app token'}, status=status.HTTP_400_BAD_REQUEST)
+        
 
         if not header_token or not header_token.startswith('Token '):
             return Response({'status': 'INVALID', 'message': 'Authorization header missing or invalid'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1033,9 +1031,6 @@ class ChangePasswordView(APIView):
 
         user_id = token.user_id
 
-        user_detail = UserDetail.objects.filter(extUser_id=user_id, device_id=device_id).first()
-        if not user_detail:
-            return Response({'status': 'INVALID', 'message': 'Invalid device ID'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.get(pk=user_id)
