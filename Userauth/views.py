@@ -1125,10 +1125,10 @@ class AdminChangePasswordView(APIView):
         app_token = serializer.validated_data.get('app_token')
         user_id = serializer.validated_data.get('user_id')
         username = serializer.validated_data.get('username')
-        mobile_number = serializer.validated_data.get('mobile_number')
+       
         new_password = serializer.validated_data.get('new_password')
         header_token = request.headers.get('Authorization')
-        device_id = serializer.validated_data.get('device_id')
+        
 
         if app_token != settings.APP_TOKEN:
             return Response({'status': 'INVALID', 'message': 'Invalid app token'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1138,9 +1138,7 @@ class AdminChangePasswordView(APIView):
 
         token_key = header_token.split()[1]
 
-        user_detail = UserDetail.objects.filter(extUser_id=user_id, device_id=device_id).first()
-        if not user_detail:
-            return Response({'status': 'INVALID', 'message': 'Invalid device ID'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
         try:
@@ -1158,13 +1156,7 @@ class AdminChangePasswordView(APIView):
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return Response({'status': 'INVALID', 'message': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user_detail = UserDetail.objects.get(extUser=user)
-        except user_detail.DoesNotexists:
-            return Response({'status': 'INVALID', 'message': 'Userdetails does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if user.username != username or user_detail.mobile_no != mobile_number: 
-            return Response({'status': 'INVALID', 'message': 'Username or mobile number does not match'}, status=status.HTTP_400_BAD_REQUEST)
+       
 
         user.set_password(new_password)
         user.save()

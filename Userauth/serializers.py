@@ -155,11 +155,11 @@ class WebLogoutSerializer(serializers.Serializer):
 class AdminChangePasswordSerializer(serializers.Serializer):
     user_id = serializers.IntegerField(required=True)
     username = serializers.CharField(required=True)
-    mobile_number = serializers.CharField(required=True)
+   
     new_password = serializers.CharField(required=True, write_only=True)
     confirm_password = serializers.CharField(required=True, write_only=True)
     app_token = serializers.CharField(required=True)
-    device_id = serializers.CharField(required=True)
+    
 
     def validate(self, data):
         if data['new_password'] != data['confirm_password']:
