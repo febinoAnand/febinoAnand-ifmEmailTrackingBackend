@@ -6,7 +6,7 @@ class SendReportViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SendReport
-        fields = ("date", "time", "to_number", "from_number", "message", "delivery_status")
+        fields = ('__all__')
 
 class SettingViewSerializer(serializers.ModelSerializer):
     class Meta:

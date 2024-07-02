@@ -968,43 +968,45 @@ class LoginView(APIView):
         else:
             return Response({'status': 'DEVICE_MISMATCH', 'message': 'Account already used in another device. Redo Registration'}, status=status.HTTP_200_OK)
 
-                                   #user_Logout_view#
-@method_decorator(login_required, name='dispatch')
+#                                    #user_Logout_view#
+
 class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
-        serializer = LogoutSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+            serializer = LogoutSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        app_token = serializer.validated_data.get('app_token')
-        device_id = serializer.validated_data.get('device_id')
-        header_token = request.headers.get('Authorization')
+            app_token = serializer.validated_data.get('app_token')
+            device_id = serializer.validated_data.get('device_id')
+            header_token = request.headers.get('Authorization')
 
-        if app_token != settings.APP_TOKEN:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            if app_token != settings.APP_TOKEN:
+                return Response({'status': 'INVALID', 'message': 'Invalid app token'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if header_token is None:
-            return Response({'status': 'INVALID', 'message': 'Authorization header missing'}, status=status.HTTP_200_OK)
+            if not header_token or not header_token.startswith('Token '):
+                return Response({'status': 'INVALID', 'message': 'Authorization header missing or invalid'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_id = self.get_user_id_from_token(request, header_token)
+            token_key = header_token.split()[1]
 
-        if not user_id:
-            return Response({'status': 'INVALID', 'message': 'Unauthorized'}, status=status.HTTP_200_OK)
+            try:
+                token = Token.objects.get(key=token_key)
+            except Token.DoesNotExist:
+                return Response({'status': 'INVALID', 'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_detail = UserDetail.objects.filter(extUser_id=user_id, device_id=device_id).first()
+            user_id = token.user_id
+            user_detail = UserDetail.objects.filter(extUser_id=user_id, device_id=device_id).first()
 
-        if not user_detail:
-            return Response({'status': 'INVALID', 'message': 'Invalid device ID'}, status=status.HTTP_200_OK)
+            if not user_detail:
+                return Response({'status': 'INVALID', 'message': 'Invalid device ID'}, status=status.HTTP_400_BAD_REQUEST)
 
-        request.session.clear()
+            token.delete()
 
-        return Response({'status': 'OK', 'message': 'Logout successful'})
-
-    def get_user_id_from_token(self, request, token):
-        return request.session.get(token)
+            return Response({'status': 'OK', 'message': 'Logout successful'})
                       
                       #user_changepassword_view#
-@method_decorator(login_required, name='dispatch')
+
 class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         serializer = ChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -1046,8 +1048,10 @@ class ChangePasswordView(APIView):
     def get_user_id_from_token(self, request, token):
         return request.session.get(token)  
     
-@method_decorator(login_required, name='dispatch')
+                                 #deleteuserview
+
 class DeleteUserView(APIView):
+    permission_classes = [IsAuthenticated]
     def delete(self, request, user_id):
         try:
             user = User.objects.get(id=user_id)
