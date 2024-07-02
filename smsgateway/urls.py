@@ -10,5 +10,5 @@ router.register('setting',SettingViewSet)
 
 urlpatterns = [
     path('',include(router.urls)),
-    path('sendsms/',sendSMS)
+    path('sendsms/',sendSMS,name='sendsms')
 ]
