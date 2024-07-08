@@ -961,7 +961,8 @@ class LoginView(APIView):
                 return Response({
                     'status': 'OK',
                     'token': token.key,
-                    'message': 'Login successful'
+                    'message': 'Login successful',
+                    'user_expiry_time':UserAuthSetting.all_user_expiry_time
                 })
 
             return Response({'status': 'INVALID', 'message': 'Invalid Credentials'}, status=status.HTTP_200_OK)
