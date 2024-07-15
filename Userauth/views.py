@@ -1205,8 +1205,8 @@ class DemoGenerateOtpView(APIView):
         mobile_no = serializer.validated_data.get('mobile_no')
 
         try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
+            user = UnauthUser.objects.get(emailaddress=username)
+        except UnauthUser.DoesNotExist:
             return Response({'status': 'INVALID', 'message': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
