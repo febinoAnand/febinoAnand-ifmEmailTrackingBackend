@@ -1176,7 +1176,7 @@ class DemoUserActivityView(APIView):
         
 
 class DemoUpdateUserStatusView(APIView):
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
 
     def post(self, request, *args, **kwargs):
         serializer = UserStatusUpdateSerializer(data=request.data)
