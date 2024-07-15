@@ -164,3 +164,19 @@ class AdminChangePasswordSerializer(serializers.Serializer):
         if data['new_password'] != data['confirm_password']:
             raise serializers.ValidationError("New password and confirm password do not match.")
         return data
+    
+
+
+
+
+class UserActivitySerializer(serializers.Serializer):
+    username = serializers.CharField()
+
+class UserStatusUpdateSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    is_active = serializers.BooleanField()
+
+
+class UserVerificationSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    mobile_no = serializers.CharField(max_length=15)

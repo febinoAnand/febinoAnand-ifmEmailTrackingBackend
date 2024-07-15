@@ -1156,3 +1156,66 @@ class AdminChangePasswordView(APIView):
         user.save()
 
         return Response({'status': 'OK', 'message': 'Password updated successfully'}, status=status.HTTP_200_OK)
+    
+
+
+class DemoUserActivityView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = UserActivitySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data.get('username')
+
+        try:
+            user = User.objects.get(username=username)
+            is_active = user.is_active
+            status_message = 'active' if is_active else 'inactive'
+            return Response({'username': username, 'status': status_message}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'status': 'INVALID', 'message': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class DemoUpdateUserStatusView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserStatusUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data.get('username')
+        is_active = serializer.validated_data.get('is_active')
+
+        try:
+            user = User.objects.get(username=username)
+            user.is_active = is_active
+            user.save()
+            status_message = 'active' if is_active else 'inactive'
+            return Response({'username': username, 'status': status_message}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'status': 'INVALID', 'message': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class DemoGenerateOtpView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = UserVerificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data.get('username')
+        mobile_no = serializer.validated_data.get('mobile_no')
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({'status': 'INVALID', 'message': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            unauth_user = UnauthUser.objects.get(mobile_no=mobile_no)
+        except UnauthUser.DoesNotExist:
+            return Response({'status': 'INVALID', 'message': 'Phone number does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if unauth_user.otp:
+            otp =unauth_user.otp 
+            return Response({'status': 'OK', 'message': 'OTP generated', 'otp': otp}, status=status.HTTP_200_OK)
+        else:
+            return Response({'status': 'INVALID', 'message': 'OTP not generated'}, status=status.HTTP_400_BAD_REQUEST)
