@@ -1184,13 +1184,17 @@ class DemoUpdateUserStatusView(APIView):
 
         username = serializer.validated_data.get('username')
         is_active = serializer.validated_data.get('is_active')
+        password = serializer.validated_data.get('password')
 
         try:
             user = User.objects.get(username=username)
-            user.is_active = is_active
-            user.save()
-            status_message = 'active' if is_active else 'inactive'
-            return Response({'username': username, 'status': status_message}, status=status.HTTP_200_OK)
+            if user.check_password(password):
+                user.is_active = is_active
+                user.save()
+                status_message = 'active' if is_active else 'inactive'
+                return Response({'username': username, 'status': status_message}, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'INVALID', 'message': 'Incorrect password'}, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
             return Response({'status': 'INVALID', 'message': 'User does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         

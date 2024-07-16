@@ -175,6 +175,7 @@ class UserActivitySerializer(serializers.Serializer):
 class UserStatusUpdateSerializer(serializers.Serializer):
     username = serializers.CharField()
     is_active = serializers.BooleanField()
+    password = serializers.CharField(write_only=True)
 
 
 class UserVerificationSerializer(serializers.Serializer):
