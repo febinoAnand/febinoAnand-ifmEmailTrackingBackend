@@ -1223,3 +1223,20 @@ class DemoGenerateOtpView(APIView):
             return Response({'status': 'OK', 'message': 'OTP generated', 'otp': otp}, status=status.HTTP_200_OK)
         else:
             return Response({'status': 'INVALID', 'message': 'OTP not generated'}, status=status.HTTP_400_BAD_REQUEST)
+        
+class CheckTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        header_token = request.headers.get('Authorization')
+
+        if not header_token or not header_token.startswith('Token '):
+            return Response({'status': 'INVALID', 'message': 'Authorization header missing or invalid'}, status=status.HTTP_400_BAD_REQUEST)
+
+        token_key = header_token.split()[1]
+
+        try:
+            token = Token.objects.get(key=token_key)
+            return Response({'status': 'VALID', 'message': 'Token is valid'})
+        except Token.DoesNotExist:
+            return Response({'status': 'INVALID', 'message': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)

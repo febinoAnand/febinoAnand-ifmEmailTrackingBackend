@@ -29,6 +29,7 @@ urlpatterns = [
     path('demo-check-user-activity/', DemoUserActivityView.as_view(), name='check-user-activity'),
     path('demo-update-user-status/', DemoUpdateUserStatusView.as_view(), name='update-user-status'),
     path('demo-check-generate-otp/', DemoGenerateOtpView.as_view(), name='generate-otp'),
+    path('check-token/', CheckTokenView.as_view(), name='check-token'),
 ]
 
 
