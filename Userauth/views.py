@@ -941,6 +941,19 @@ class LoginView(APIView):
         device_id = serializer.validated_data['device_id']
         notification_id = serializer.validated_data['notification_id']
 
+        # Special handling for demo user
+        if username == "demo@ifm.com":
+            # You can specify a static token for the demo user
+            static_token = "static-demo-token-12345"
+            
+            return Response({
+                'status': 'OK',
+                'token': static_token,
+                'message': 'Demo login successful',
+                'user_expiry_time': str(UserAuthSetting.objects.first().all_user_expiry_time)
+            }, status=status.HTTP_200_OK)
+
+        # Regular user handling
         user = User.objects.filter(username=username).first()
 
         if user and not user.is_active:
@@ -962,12 +975,13 @@ class LoginView(APIView):
                     'status': 'OK',
                     'token': token.key,
                     'message': 'Login successful',
-                    'user_expiry_time':str(UserAuthSetting.objects.first().all_user_expiry_time)
-                },status=status.HTTP_200_OK)
+                    'user_expiry_time': str(UserAuthSetting.objects.first().all_user_expiry_time)
+                }, status=status.HTTP_200_OK)
 
             return Response({'status': 'INVALID', 'message': 'Invalid Credentials'}, status=status.HTTP_200_OK)
         else:
             return Response({'status': 'DEVICE_MISMATCH', 'message': 'Account already used in another device. Redo Registration'}, status=status.HTTP_200_OK)
+
 
 #                                    #user_Logout_view#
 
