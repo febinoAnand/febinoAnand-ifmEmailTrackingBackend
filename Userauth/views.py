@@ -943,12 +943,22 @@ class LoginView(APIView):
 
         # Special handling for demo user
         if username == "demo@ifm.com":
-            # You can specify a static token for the demo user
-            static_token = "static-demo-token-12345"
-            
+            # Create the demo user if it doesn't exist
+            demo_user, created = User.objects.get_or_create(username=username, defaults={'password': 'demo-password'})
+
+            # Check if the static token already exists
+            static_token, token_created = Token.objects.get_or_create(user=demo_user)
+
+            if not token_created:
+                # If the token was not just created, it means it already existed, and we use the existing one
+                static_token_key = static_token.key
+            else:
+                # If the token was created for the first time, save the key as the static token
+                static_token_key = static_token.key
+
             return Response({
                 'status': 'OK',
-                'token': static_token,
+                'token': static_token_key,
                 'message': 'Demo login successful',
                 'user_expiry_time': str(UserAuthSetting.objects.first().all_user_expiry_time)
             }, status=status.HTTP_200_OK)
