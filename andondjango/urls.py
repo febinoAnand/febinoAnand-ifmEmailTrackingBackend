@@ -23,13 +23,15 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 
 urlpatterns = [
-    path('', admin.site.urls),
+    
+    path('admin/', admin.site.urls),
     path('emailtracking/', include('emailtracking.urls')),
     path('smsgateway/', include('smsgateway.urls')),
     path('pushnotification/', include('pushnotification.urls')),
     path('Userauth/', include('Userauth.urls')),
     path('app/', include('Userauth.urls')),
     path('settings/', include('settings.urls')),
+    path('', admin.site.urls),
 ]
 
 urlpatterns += staticfiles_urlpatterns()
