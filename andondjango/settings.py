@@ -173,7 +173,7 @@ JAZZMIN_SETTINGS={
     "site_brand": "Innospace",
 }
 
-CSRF_TRUSTED_ORIGINS = ['http://django.febinosolutions.com','https://*.127.0.0.1','http://64.227.130.181:9002/','http://innod.febinosolutions.com','https://do.febinosolutions.com','https://ifmapi.univa.cloud']
+CSRF_TRUSTED_ORIGINS = ['http://django.febinosolutions.com','https://*.127.0.0.1','http://64.227.130.181:9002/','http://innod.febinosolutions.com','https://do.febinosolutions.com','https://ifmapi.univa.cloud','https://febinosolutions.com','http://febinosolutions.com']
 
 
 # Mobile app settings
