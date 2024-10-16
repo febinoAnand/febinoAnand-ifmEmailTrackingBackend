@@ -23,7 +23,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('', admin.site.urls),
     path('emailtracking/', include('emailtracking.urls')),
     path('smsgateway/', include('smsgateway.urls')),
     path('pushnotification/', include('pushnotification.urls')),
