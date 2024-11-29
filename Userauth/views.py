@@ -932,9 +932,9 @@ class LoginView(APIView):
             return HttpResponseNotFound()
 
         # Validate the POST data
-        if jsondata["username"] == "demo@ifm.com":
-            # if jsondata["notifcation_id"] == '':
-            jsondata["notification_id"] == str(uuid.uuid4())
+        if jsondata["username"] == "demo@ifm.com" and jsondata["notification_id"] == "":
+            # print ("demouser")
+            jsondata.update({"notification_id":str(uuid.uuid4())})
 
         serializer = LoginSerializer(data=jsondata)
         if not serializer.is_valid():
